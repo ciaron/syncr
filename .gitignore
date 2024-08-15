@@ -1,0 +1,5 @@
+IMAGES/
+__pycache__/
+env/
+test.py
+kivytest.py

@@ -7,10 +7,29 @@ from SECRETS import api_secret
 flickr = flickrapi.FlickrAPI(api_key, api_secret)
 flickr.authenticate_via_browser(perms='write')
 
-filename = "./IMAGES/09/DSCF3769.JPG"
-
 def callback(progress):
-    print(progress)
+    total = 100
+    percent = int(100 * (progress / float(total)))
+    bar = '#' * percent + '-' * (100 - percent)
+    #print(progress) # only reaches 99
+    #print(percent, progress)
+    print(f"\r|{bar}| {percent:.2f}%", end="\r")
+
+def list_images(path):
+    """
+    Function that receives as a parameter a directory path
+    :return list_: File List and Its Absolute Paths
+    """
+
+    files = []
+
+    # r = root, d = directories, f = files
+    for r, d, f in os.walk(path):
+        for file in f:
+            files.append(os.path.join(r, file))
+
+    lst = [file for file in files]
+    return lst
 
 class FileWithCallback(object):
     def __init__(self, filename, callback):
@@ -26,6 +45,13 @@ class FileWithCallback(object):
             self.callback(self.tell() * 100 // self.len)
         return self.file.read(size)
 
-fileobj = FileWithCallback(filename, callback)
-rsp = flickr.upload(filename, fileobj, title="A TEST")
+if __name__ == '__main__':
+
+    imagelist = list_images('./IMAGES')
+    print(imagelist)
+
+    # upload a test image
+    filename = "./IMAGES/09/DSCF3769.JPG"
+    fileobj = FileWithCallback(filename, callback)
+    rsp = flickr.upload(filename, fileobj, title="A TEST")
 

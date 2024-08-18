@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+
 import flickrapi
 import os
 import math
+import argparse
 
 api_key="3e7dd44924b55357971d63965c3b4f86"
 from SECRETS import api_secret
@@ -67,7 +70,27 @@ class FileWithCallback(object):
 
 if __name__ == '__main__':
 
-    imagelist = list_images('./IMAGES')
+    parser = argparse.ArgumentParser(
+        prog='syncr',
+        description='Upload images to Flickr',
+        epilog='')
+
+    parser.add_argument("folder", help="upload this folder of images (incl. all subfolders)")
+    parser.add_argument('--album', help='add images to a new album called ALBUM')
+    parser.add_argument('-d', '--usedirname', action="store_true", help='use the directory name as the album name (new album)')
+    parser.add_argument('--privacy', help='set image privacy to PRIVACY. Default is public')
+
+    args = parser.parse_args()
+
+    if args.album:
+        print(args.album)
+        # create the album
+        rsp = flickr.photosets.create(title=args.album, primary_photo_id="53919645835")
+        # print the new photoset/album ID:
+        albumid = rsp[0].attrib['id']
+        print(f"album id is {albumid}")
+
+    imagelist = list_images('./IMAGES/11/11')
     print(imagelist)
 
     ## upload a test image
@@ -84,9 +107,13 @@ if __name__ == '__main__':
     # no callback for progress bar:
     #rsp = flickr.upload(filename, title="A TEST")
 
+    # Upload all images in folder
     for image in imagelist:
-
         filename = image
         fileobj = FileWithCallback(filename, callback)
         rsp = flickr.upload(filename, fileobj, title="untitled")
+        for c in rsp:
+            print(c.tag, c.attrib)
+            photoid = rsp[0].text
+            print(photoid)
         lastline=False

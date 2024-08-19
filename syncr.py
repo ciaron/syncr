@@ -17,25 +17,8 @@ numfiles=0
 # calculate an MD5 hash for a file:
 # hashlib.md5(open('./IMAGES/11/11/DSCF3801.JPG', 'rb').read()).hexdigest()
 
-# Get absolute path for a file.
-#>>> os.path.abspath('./IMAGES/11/11/DSCF3801.JPG')
-#'/home/ciaron/syncr/IMAGES/11/11/DSCF3801.JPG'
-
-def generate_lines_that_equal(string, fp):
-    for line in fp:
-        if line.startswith(string):
-            yield line
-
 def lines_that_start_with(string, fp):
     return [line for line in fp if line.startswith(string)]
-
-"""
-with open("file.txt", "r") as fp:
-    for line in generate_lines_that_equal("my_string", fp):
-        print(line)
-"""
-
-
 
 def callback(p):
     """
@@ -149,6 +132,7 @@ if __name__ == '__main__':
         for image in imagelist:
             filename = image
             found = False
+
             # if the absolute filename exists in the history, don't re-upload
             with open(configfile, 'r') as fp:
                 for line in lines_that_start_with(os.path.abspath(filename), fp):
@@ -167,7 +151,7 @@ if __name__ == '__main__':
                     photoids.append(photoid)
                 lastline=False
             else:
-                print("Skipping", filename)
+                print(f"Skipping {filename}, already in history ({configfile})")
 
             n += 1
 

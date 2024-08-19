@@ -8,10 +8,11 @@ import argparse
 api_key="3e7dd44924b55357971d63965c3b4f86"
 from SECRETS import api_secret
 
-flickr = flickrapi.FlickrAPI(api_key, api_secret)
+flickr = flickrapi.FlickrAPI(api_key, api_secret, format='parsed-json')
 flickr.authenticate_via_browser(perms='write')
 
 lastline=False
+numfiles=0
 
 def callback(p):
     """
@@ -21,20 +22,21 @@ def callback(p):
 
     progress = p['progress']
     name = p['name']
+    n = p['n']
+    numfiles = p['numfiles']
 
     total = 100
     percent = 100 * (progress / float(total))
     bar = '#' * int(percent) + '-' * int(100 - percent)
-    #print(f"\r|{bar}| {percent:.2f}%", end="\r")
-
+    status=f"{n}/{numfiles}"
     if (math.ceil(percent) == 100) and lastline==False:
-        print(f"\r{name} |{bar}| {math.ceil(percent)}%\n", end="\r")
+        print(f"\r{status} : {name} |{bar}| {math.ceil(percent)}%\n", end="\r")
     elif lastline==False:
-        print(f"\r{name} |{bar}| {math.ceil(percent)}%", end="\r")
+        print(f"\r{status} : {name} |{bar}| {math.ceil(percent)}%", end="\r")
 
     if math.ceil(percent) == 100:
         lastline=True
-
+	
 def list_images(path):
     """
     Function that receives as a parameter a directory path
@@ -55,17 +57,19 @@ class FileWithCallback(object):
     def __init__(self, filename, callback):
         self.file = open(filename, 'rb')
         self.callback = callback
-        # the following attributes and methods are required
         self.len = os.path.getsize(filename)
         self.fileno = self.file.fileno
         self.tell = self.file.tell
         self.p = {}
 
     def read(self, size):
+        global numfiles
+        global n
         if self.callback:
-            #self.callback(self.tell() * 100.0 / self.len)
             self.p['progress'] = self.tell() * 100.0 / self.len
             self.p['name'] = filename
+            self.p['numfiles'] = numfiles
+            self.p['n'] = n
             self.callback(self.p)
 
         return self.file.read(size)
@@ -75,10 +79,9 @@ class list_action(argparse.Action):
         return super().__init__(option_strings, dest, nargs=0, default=argparse.SUPPRESS, **kwargs)
     
     def __call__(self, parser, namespace, values, option_string, **kwargs):
-        # Do whatever should be done here
-        photosets = flickr.photosets.getList()[0]
-        for photoset in reversed(photosets):
-            print(f"{photoset.attrib['id']:20} : {photoset[0].text}")
+        photosets = flickr.photosets.getList()['photosets']
+        for photoset in reversed(photosets['photoset']):
+            print(f"{photoset['id']:20} : {photoset['title']['_content']}")
         exit(0)
 
         parser.exit()
@@ -90,7 +93,6 @@ if __name__ == '__main__':
         description='Upload images to Flickr',
         epilog='')
 
-    #group = parser.add_mutually_exclusive_group()
     parser.add_argument("folder", help="upload this folder of images (incl. all subfolders)")
     parser.add_argument('-l', '--list', action=list_action, help='list existing albums and exit')
     parser.add_argument('-n', '--album', help='add images to a new album called ALBUM')
@@ -101,61 +103,47 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    #if args.list:
-    #    photosets = flickr.photosets.getList()[0]
-    #    for photoset in reversed(photosets):
-    #        print(f"{photoset.attrib['id']:20} : {photoset[0].text}")
-    #    exit(0)
-
     if args.privacy=="public":
         is_public=True
     else:
         is_public=False
         
     imagelist = list_images(args.folder)
-    #imagelist = list_images('./IMAGES/11/11')
-    #print(imagelist)
-    #print(args)
-
-    # no callback for progress bar:
-    #rsp = flickr.upload(filename, title="A TEST")
-
-    # Upload all images in folder
+    numfiles=len(imagelist)
     photoids=[]
 
     if not args.dryrun:
         # upload the images
+        n = 1
         for image in imagelist:
             filename = image
             fileobj = FileWithCallback(filename, callback)
-            rsp = flickr.upload(filename, fileobj, is_public=is_public)
-            #rsp = flickr.upload(filename, fileobj, title="untitled", is_public=is_public)
+            rsp = flickr.upload(filename, fileobj, is_public=is_public, format='etree')
             for c in rsp:
                 photoid = rsp[0].text
                 photoids.append(photoid)
-                #print(photoid)
-                #print(c.tag, c.attrib)
             lastline=False
+            n += 1
 
         # create album, if requested, and add all images
         albumid=None
         if args.album or args.usedirname:
         
-            #print(args.album)
+			# use specified album name
             if args.album:
                 albumname = args.album
+			# ...or use the directory name as album name
             if args.usedirname:
                 albumname = args.folder
 
             # create the album
             rsp = flickr.photosets.create(title=albumname, primary_photo_id=photoids[0])
-            albumid = rsp[0].attrib['id']
-            #print(f"album id is {albumid}")
+            albumid = rsp['photoset']['id']
 
         if args.existingalbum:
             albumid = args.existingalbum            
 
-            # add uploaded images to this album
+        # add uploaded images to this album
         if albumid:
             for photoid in photoids[1:]:
                 flickr.photosets.addPhoto(photoset_id=albumid, photo_id=photoid)

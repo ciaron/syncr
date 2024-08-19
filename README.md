@@ -26,6 +26,7 @@ syncr --folder=<folder, relative or absolute> --rate=<images per minute> --quiet
 
 ## Future plans
 - [ ] 2-way sync (Flickr photoset <-> folder on disk)
+  - [ ] 1-way sync works already: 1) `syncr --existingalbum <ID> FOLDERNAME`; then 2) add files to FOLDERNAME then 3) run 1) again
 - [ ] set title and description from EXIF (disable with `--no-exif-title`, `--no-exif-desc`)
 - [ ] local web app
 - [ ] GUI application (Electron? React?)

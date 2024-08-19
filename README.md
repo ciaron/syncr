@@ -25,6 +25,7 @@ syncr --folder=<folder, relative or absolute> --rate=<images per minute> --quiet
 - [ ] upload to new album `--album=`, `--use-directory-name|-d`
 
 ## Future plans
+- [ ] 2-way sync (Flickr photoset <-> folder on disk)
 - [ ] set title and description from EXIF (disable with `--no-exif-title`, `--no-exif-desc`)
 - [ ] local web app
 - [ ] GUI application (Electron? React?)

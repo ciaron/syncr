@@ -35,9 +35,8 @@ options:
 ## Features
 
 - [x] progress bar
-- [ ] rate-limiting `--rate` (there are no limits for Flickr Pro members)
 - [x] don't repeat uploads. absolute paths for uploads are stored and compared
-- [ ] warning when number of images (or total upload size in MB) of upload exceeds a threshold `--nowarn` to disable
+- [x] warning when number of images (or total upload size in MB) of upload exceeds a threshold, `-y` to disable
 - [x] exclude files which are not images (i.e. only JPG, PNG, GIF)
 - [x] default uploads are `private`, can set to `--privacy=public`
 - [x] upload to existing album (list albums with `-l`)
@@ -51,3 +50,5 @@ options:
 - [ ] local web app
 - [ ] GUI application (Electron? React?)
 - [ ] set `is_friend`, `is_family` as well as `is_public`.
+- [ ] rate-limiting with `--rate` MB/s or images/sec? (there are no limits for Flickr Pro members)
+

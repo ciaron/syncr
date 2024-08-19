@@ -4,6 +4,7 @@ import flickrapi
 import os
 import math
 import argparse
+from PIL import Image
 
 api_key="3e7dd44924b55357971d63965c3b4f86"
 from SECRETS import api_secret
@@ -19,6 +20,18 @@ numfiles=0
 
 def lines_that_start_with(string, fp):
     return [line for line in fp if line.startswith(string)]
+
+class list_action(argparse.Action):
+    def __init__(self, option_strings, dest, **kwargs):
+        return super().__init__(option_strings, dest, nargs=0, default=argparse.SUPPRESS, **kwargs)
+    
+    def __call__(self, parser, namespace, values, option_string, **kwargs):
+        photosets = flickr.photosets.getList()['photosets']
+        for photoset in reversed(photosets['photoset']):
+            print(f"{photoset['id']:20} : {photoset['title']['_content']}")
+        exit(0)
+
+        parser.exit()
 
 def callback(p):
     """
@@ -43,22 +56,6 @@ def callback(p):
     if math.ceil(percent) == 100:
         lastline=True
 	
-def list_images(path):
-    """
-    Function that receives as a parameter a directory path
-    :return list_: File List and Its Absolute Paths
-    """
-
-    files = []
-
-    # r = root, d = directories, f = files
-    for r, d, f in os.walk(path):
-        for file in f:
-            files.append(os.path.join(r, file))
-
-    lst = [file for file in files]
-    return lst
-
 class FileWithCallback(object):
     def __init__(self, filename, callback):
         self.file = open(filename, 'rb')
@@ -80,17 +77,32 @@ class FileWithCallback(object):
 
         return self.file.read(size)
 
-class list_action(argparse.Action):
-    def __init__(self, option_strings, dest, **kwargs):
-        return super().__init__(option_strings, dest, nargs=0, default=argparse.SUPPRESS, **kwargs)
-    
-    def __call__(self, parser, namespace, values, option_string, **kwargs):
-        photosets = flickr.photosets.getList()['photosets']
-        for photoset in reversed(photosets['photoset']):
-            print(f"{photoset['id']:20} : {photoset['title']['_content']}")
-        exit(0)
+def is_image(filename):
+    try:
+        im=Image.open(filename)
+        im.verify()
+        im.close()
+        return True
+    except:
+        return False
 
-        parser.exit()
+def list_images(path):
+    """
+    Function that receives as a parameter a directory path
+    :return list_: File List and Its Absolute Paths
+    """
+
+    files = []
+
+    # r = root, d = directories, f = files
+    for r, d, f in os.walk(path):
+        for file in f:
+            if is_image(os.path.join(r,file)):
+                files.append(os.path.join(r, file))
+            #files.append(os.path.join(r, file))
+
+    lst = [file for file in files]
+    return lst
 
 if __name__ == '__main__':
 
@@ -109,7 +121,7 @@ if __name__ == '__main__':
 
     parser.add_argument("folder", help="upload this folder of images (incl. all subfolders)")
     parser.add_argument('-l', '--list', action=list_action, help='list existing albums and exit')
-    parser.add_argument('-n', '--album', help='add images to a new album called ALBUM')
+    parser.add_argument('-n', '--albumname', help='add images to a new album called ALBUMNAME')
     parser.add_argument('-d', '--usedirname', action="store_true", help='use the folder name as the album name (creates a new album)')
     parser.add_argument('-e', '--existingalbum', help='upload to existing album (specify album/photoset ID)')
     parser.add_argument('-p', '--privacy', help='set image privacy to PRIVACY. Default is public', default="private")
@@ -125,6 +137,10 @@ if __name__ == '__main__':
     imagelist = list_images(args.folder)
     numfiles=len(imagelist)
     photoids=[]
+
+    # if there's no history file, make an empty one
+    if not os.path.isfile(configfile):
+        open(configfile, 'a').close()
 
     if not args.dryrun:
         # upload the images
@@ -157,23 +173,25 @@ if __name__ == '__main__':
 
         # create album, if requested, and add all images
         albumid=None
-        if args.album or args.usedirname:
+
+        if args.albumname or args.usedirname:
         
 			# use specified album name
-            if args.album:
-                albumname = args.album
+            if args.albumname:
+                albumname = args.albumname
 			# ...or use the directory name as album name
             if args.usedirname:
                 albumname = args.folder
 
             # create the album
-            rsp = flickr.photosets.create(title=albumname, primary_photo_id=photoids[0])
-            albumid = rsp['photoset']['id']
+            if len(photoids) > 0:
+                rsp = flickr.photosets.create(title=albumname, primary_photo_id=photoids[0])
+                albumid = rsp['photoset']['id']
 
         if args.existingalbum:
             albumid = args.existingalbum            
 
-        # add uploaded images to this album
+        # add uploaded images to an album, if this is specified
         if albumid:
             for photoid in photoids[1:]:
                 flickr.photosets.addPhoto(photoset_id=albumid, photo_id=photoid)

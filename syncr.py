@@ -5,6 +5,7 @@ import os
 import math
 import argparse
 from PIL import Image
+import urllib.request
 
 api_key="3e7dd44924b55357971d63965c3b4f86"
 from SECRETS import api_secret
@@ -77,6 +78,21 @@ class FileWithCallback(object):
 
         return self.file.read(size)
 
+def url_is_alive(url):
+    """
+    Checks that a given URL is reachable.
+    :param url: A URL
+    :rtype: bool
+    """
+    request = urllib.request.Request(url)
+    request.get_method = lambda: 'HEAD'
+
+    try:
+        urllib.request.urlopen(request)
+        return True
+    except urllib.request.HTTPError:
+        return False
+
 def is_image(filename):
     try:
         im=Image.open(filename)
@@ -125,6 +141,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--usedirname', action="store_true", help='use the folder name as the album name (creates a new album)')
     parser.add_argument('-e', '--existingalbum', help='upload to existing album (specify album/photoset ID)')
     parser.add_argument('-p', '--privacy', help='set image privacy to PRIVACY. Default is public', default="private")
+    parser.add_argument('--download', dest='albumid', help='Download all images (original size) from ALBUMID to FOLDER')
     parser.add_argument('--dryrun', action="store_true", default=False, help='Dry run - don\'t make any changes on Flickr')
 
     args = parser.parse_args()
@@ -141,6 +158,25 @@ if __name__ == '__main__':
     # if there's no history file, make an empty one
     if not os.path.isfile(configfile):
         open(configfile, 'a').close()
+
+    # DOWNLOADING
+    if args.albumid:
+        # get list of photos in album
+        ps = flickr.photosets.getPhotos(photoset_id=args.albumid, extras="url_l,url_o")
+        num_to_download = len(ps['photoset']['photo'])
+        n = 1
+        if not os.path.isdir(args.folder):
+            os.makedirs(args.folder, exist_ok=True)
+        for photo in ps['photoset']['photo']:
+            print(f"downloading {n} of {num_to_download}")
+            if url_is_alive(photo['url_o']):
+                urllib.request.urlretrieve(photo['url_o'], os.path.join(args.folder,os.path.basename(photo['url_o'])))
+                n += 1
+            else:
+                print(f"{photo['url_o']} not found, skipping")
+
+        print(f"finished downloading, exiting")
+        exit(0)
 
     if not args.dryrun:
         # upload the images

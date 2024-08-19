@@ -23,7 +23,7 @@ syncr --folder=<folder, relative or absolute> --rate=<images per minute> --quiet
 - [x] default uploads are `private`, can set to `public` and/or `friends/family` : `--privacy=public|friends|private`
 - [x] upload to existing album (list albums with `-l`)
 - [x] upload to new album `--album=`, or `--use-directory-name|-d`
-- [x] download an album from Flickr to a local directory (`--download ALBUMID LOCAL_FOLDER`
+- [x] download an album from Flickr to a local directory (`--download ALBUMID LOCAL_FOLDER`)
 
 ## Future plans
 - [ ] 2-way sync (Flickr photoset <-> folder on disk)

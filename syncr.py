@@ -77,21 +77,21 @@ if __name__ == '__main__':
         description='Upload images to Flickr',
         epilog='')
 
+    #group = parser.add_mutually_exclusive_group()
     parser.add_argument("folder", help="upload this folder of images (incl. all subfolders)")
-    parser.add_argument('--album', help='add images to a new album called ALBUM')
-    parser.add_argument('-d', '--usedirname', action="store_true", help='use the directory name as the album name (new album)')
-    parser.add_argument('--privacy', help='set image privacy to PRIVACY. Default is public', default="private")
+    parser.add_argument('-l', '--list', action="store_true", help='list existing albums and exit')
+    parser.add_argument('-n', '--album', help='add images to a new album called ALBUM')
+    parser.add_argument('-d', '--usedirname', action="store_true", help='use the folder name as the album name (creates a new album)')
+    parser.add_argument('-e', '--existingalbum', help='upload to existing album (specify album/photoset ID)')
+    parser.add_argument('-p', '--privacy', help='set image privacy to PRIVACY. Default is public', default="private")
 
     args = parser.parse_args()
 
-    albumid=None
-    if args.album:
-        #print(args.album)
-        # create the album
-        rsp = flickr.photosets.create(title=args.album, primary_photo_id="53919645835")
-        # print the new photoset/album ID:
-        albumid = rsp[0].attrib['id']
-        #print(f"album id is {albumid}")
+    if args.list:
+        photosets = flickr.photosets.getList()[0]
+        for photoset in reversed(photosets):
+            print(f"{photoset.attrib['id']:20} : {photoset[0].text}")
+        exit(0)
 
     if args.privacy=="public":
         is_public=True
@@ -107,15 +107,43 @@ if __name__ == '__main__':
     #rsp = flickr.upload(filename, title="A TEST")
 
     # Upload all images in folder
-    for image in imagelist:
-        filename = image
-        fileobj = FileWithCallback(filename, callback)
-        rsp = flickr.upload(filename, fileobj, title="untitled", is_public=is_public)
-        for c in rsp:
-            print(c.tag, c.attrib)
-            photoid = rsp[0].text
-            print(photoid)
-        if albumid:
-            flickr.photosets.addPhoto(photoset_id=albumid, photo_id=photoid)
+    dryrun = False
+    photoids=[]
 
-        lastline=False
+    if not dryrun:
+        # upload the images
+        for image in imagelist:
+            filename = image
+            fileobj = FileWithCallback(filename, callback)
+            rsp = flickr.upload(filename, fileobj, is_public=is_public)
+            #rsp = flickr.upload(filename, fileobj, title="untitled", is_public=is_public)
+            for c in rsp:
+                photoid = rsp[0].text
+                photoids.append(photoid)
+                #print(photoid)
+                #print(c.tag, c.attrib)
+            lastline=False
+
+        # create album, if requested, and add all images
+        albumid=None
+        if args.album or args.usedirname:
+        
+            #print(args.album)
+            if args.album:
+                albumname = args.album
+            if args.usedirname:
+                albumname = args.folder
+
+            # create the album
+            rsp = flickr.photosets.create(title=albumname, primary_photo_id=photoids[0])
+            albumid = rsp[0].attrib['id']
+            #print(f"album id is {albumid}")
+
+        if args.existingalbum:
+            albumid = args.existingalbum            
+
+            # add uploaded images to this album
+        if albumid:
+            for photoid in photoids[1:]:
+                flickr.photosets.addPhoto(photoset_id=albumid, photo_id=photoid)
+

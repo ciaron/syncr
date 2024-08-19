@@ -27,7 +27,7 @@ options:
   -e EXISTINGALBUM, --existingalbum EXISTINGALBUM
                         upload to existing album (specify album/photoset ID)
   -p PRIVACY, --privacy PRIVACY
-                        set image privacy to PRIVACY. Default is public
+                        set image privacy to PRIVACY. Default is private
   --download ALBUMID    Download all images (original size) from ALBUMID to FOLDER
   --dryrun              Dry run - don't make any changes on Flickr
 

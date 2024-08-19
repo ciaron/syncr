@@ -70,6 +70,19 @@ class FileWithCallback(object):
 
         return self.file.read(size)
 
+class list_action(argparse.Action):
+    def __init__(self, option_strings, dest, **kwargs):
+        return super().__init__(option_strings, dest, nargs=0, default=argparse.SUPPRESS, **kwargs)
+    
+    def __call__(self, parser, namespace, values, option_string, **kwargs):
+        # Do whatever should be done here
+        photosets = flickr.photosets.getList()[0]
+        for photoset in reversed(photosets):
+            print(f"{photoset.attrib['id']:20} : {photoset[0].text}")
+        exit(0)
+
+        parser.exit()
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
@@ -79,19 +92,20 @@ if __name__ == '__main__':
 
     #group = parser.add_mutually_exclusive_group()
     parser.add_argument("folder", help="upload this folder of images (incl. all subfolders)")
-    parser.add_argument('-l', '--list', action="store_true", help='list existing albums and exit')
+    parser.add_argument('-l', '--list', action=list_action, help='list existing albums and exit')
     parser.add_argument('-n', '--album', help='add images to a new album called ALBUM')
     parser.add_argument('-d', '--usedirname', action="store_true", help='use the folder name as the album name (creates a new album)')
     parser.add_argument('-e', '--existingalbum', help='upload to existing album (specify album/photoset ID)')
     parser.add_argument('-p', '--privacy', help='set image privacy to PRIVACY. Default is public', default="private")
+    parser.add_argument('--dryrun', action="store_true", default=False, help='Dry run - don\'t make any changes on Flickr')
 
     args = parser.parse_args()
 
-    if args.list:
-        photosets = flickr.photosets.getList()[0]
-        for photoset in reversed(photosets):
-            print(f"{photoset.attrib['id']:20} : {photoset[0].text}")
-        exit(0)
+    #if args.list:
+    #    photosets = flickr.photosets.getList()[0]
+    #    for photoset in reversed(photosets):
+    #        print(f"{photoset.attrib['id']:20} : {photoset[0].text}")
+    #    exit(0)
 
     if args.privacy=="public":
         is_public=True
@@ -107,10 +121,9 @@ if __name__ == '__main__':
     #rsp = flickr.upload(filename, title="A TEST")
 
     # Upload all images in folder
-    dryrun = False
     photoids=[]
 
-    if not dryrun:
+    if not args.dryrun:
         # upload the images
         for image in imagelist:
             filename = image

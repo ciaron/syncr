@@ -14,6 +14,29 @@ flickr.authenticate_via_browser(perms='write')
 lastline=False
 numfiles=0
 
+# calculate an MD5 hash for a file:
+# hashlib.md5(open('./IMAGES/11/11/DSCF3801.JPG', 'rb').read()).hexdigest()
+
+# Get absolute path for a file.
+#>>> os.path.abspath('./IMAGES/11/11/DSCF3801.JPG')
+#'/home/ciaron/syncr/IMAGES/11/11/DSCF3801.JPG'
+
+def generate_lines_that_equal(string, fp):
+    for line in fp:
+        if line.startswith(string):
+            yield line
+
+def lines_that_start_with(string, fp):
+    return [line for line in fp if line.startswith(string)]
+
+"""
+with open("file.txt", "r") as fp:
+    for line in generate_lines_that_equal("my_string", fp):
+        print(line)
+"""
+
+
+
 def callback(p):
     """
     This callback is for generating the progress bar on the command line
@@ -28,11 +51,11 @@ def callback(p):
     total = 100
     percent = 100 * (progress / float(total))
     bar = '#' * int(percent) + '-' * int(100 - percent)
-    status=f"{n}/{numfiles}"
+    count=f"{n}/{numfiles}"
     if (math.ceil(percent) == 100) and lastline==False:
-        print(f"\r{status} : {name} |{bar}| {math.ceil(percent)}%\n", end="\r")
+        print(f"\r{count} : {name} |{bar}| {math.ceil(percent)}%\n", end="\r")
     elif lastline==False:
-        print(f"\r{status} : {name} |{bar}| {math.ceil(percent)}%", end="\r")
+        print(f"\r{count} : {name} |{bar}| {math.ceil(percent)}%", end="\r")
 
     if math.ceil(percent) == 100:
         lastline=True
@@ -88,6 +111,14 @@ class list_action(argparse.Action):
 
 if __name__ == '__main__':
 
+    home_directory = os.path.expanduser('~')
+    configbase=home_directory+"/.config/syncr"
+    configfile=configbase+"/syncedfiles"
+    try:
+        os.mkdir(configbase)
+    except:
+        pass
+
     parser = argparse.ArgumentParser(
         prog='syncr',
         description='Upload images to Flickr',
@@ -117,12 +148,27 @@ if __name__ == '__main__':
         n = 1
         for image in imagelist:
             filename = image
-            fileobj = FileWithCallback(filename, callback)
-            rsp = flickr.upload(filename, fileobj, is_public=is_public, format='etree')
-            for c in rsp:
-                photoid = rsp[0].text
-                photoids.append(photoid)
-            lastline=False
+            found = False
+            # if the absolute filename exists in the history, don't re-upload
+            with open(configfile, 'r') as fp:
+                for line in lines_that_start_with(os.path.abspath(filename), fp):
+                    found=True
+
+            if not found:
+
+                fileobj = FileWithCallback(filename, callback)
+                rsp = flickr.upload(filename, fileobj, is_public=is_public, format='etree')
+
+                with open(configfile, 'a') as f:
+                    f.writelines(os.path.abspath(filename)+'\n')
+
+                for c in rsp:
+                    photoid = rsp[0].text
+                    photoids.append(photoid)
+                lastline=False
+            else:
+                print("Skipping", filename)
+
             n += 1
 
         # create album, if requested, and add all images

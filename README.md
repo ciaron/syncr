@@ -15,9 +15,9 @@ syncr --folder=<folder, relative or absolute> --rate=<images per minute> --quiet
 ```
 ## Features
 
-- [ ] progress bar, squelch with `--quiet`
-- [ ] rate-limiting `--rate`
-- [ ] don't repeat uploads, or `--replace` or `--allow-duplicate-uploads`
+- [x] progress bar
+- [ ] rate-limiting `--rate` (there are no limits for Flickr Pro members)
+- [x] don't repeat uploads. absolute paths for uploads are stored and compared
 - [ ] warning when number of images (or total upload size in MB) of upload exceeds a threshold `--nowarn` to disable
 - [x] exclude files which are not images (i.e. only JPG, PNG, GIF)
 - [x] default uploads are `private`, can set to `public` and/or `friends/family` : `--privacy=public|friends|private`

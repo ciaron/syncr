@@ -13,8 +13,10 @@ flickr.authenticate_via_browser(perms='write')
 
 lastline=False
 
-#def callback(progress):
 def callback(p):
+    """
+    This callback is for generating the progress bar on the command line
+    """
     global lastline
 
     progress = p['progress']
@@ -78,32 +80,29 @@ if __name__ == '__main__':
     parser.add_argument("folder", help="upload this folder of images (incl. all subfolders)")
     parser.add_argument('--album', help='add images to a new album called ALBUM')
     parser.add_argument('-d', '--usedirname', action="store_true", help='use the directory name as the album name (new album)')
-    parser.add_argument('--privacy', help='set image privacy to PRIVACY. Default is public')
+    parser.add_argument('--privacy', help='set image privacy to PRIVACY. Default is public', default="private")
 
     args = parser.parse_args()
 
+    albumid=None
     if args.album:
-        print(args.album)
+        #print(args.album)
         # create the album
         rsp = flickr.photosets.create(title=args.album, primary_photo_id="53919645835")
         # print the new photoset/album ID:
         albumid = rsp[0].attrib['id']
-        print(f"album id is {albumid}")
+        #print(f"album id is {albumid}")
 
-    imagelist = list_images('./IMAGES/11/11')
-    print(imagelist)
+    if args.privacy=="public":
+        is_public=True
+    else:
+        is_public=False
+        
+    imagelist = list_images(args.folder)
+    #imagelist = list_images('./IMAGES/11/11')
+    #print(imagelist)
+    #print(args)
 
-    ## upload a test image
-    #filename = "./IMAGES/09/DSCF3769.JPG"
-    #fileobj = FileWithCallback(filename, callback)
-    #rsp = flickr.upload(filename, fileobj, title="untitled")
-    #lastline=False
-
-    #filename = "./IMAGES/10/DSCF3800.JPG"
-    #fileobj = FileWithCallback(filename, callback)
-    #rsp = flickr.upload(filename, fileobj, title="untitled")
-    #lastline=False
-    
     # no callback for progress bar:
     #rsp = flickr.upload(filename, title="A TEST")
 
@@ -111,9 +110,12 @@ if __name__ == '__main__':
     for image in imagelist:
         filename = image
         fileobj = FileWithCallback(filename, callback)
-        rsp = flickr.upload(filename, fileobj, title="untitled")
+        rsp = flickr.upload(filename, fileobj, title="untitled", is_public=is_public)
         for c in rsp:
             print(c.tag, c.attrib)
             photoid = rsp[0].text
             print(photoid)
+        if albumid:
+            flickr.photosets.addPhoto(photoset_id=albumid, photo_id=photoid)
+
         lastline=False

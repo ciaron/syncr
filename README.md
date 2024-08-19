@@ -15,16 +15,17 @@ syncr --folder=<folder, relative or absolute> --rate=<images per minute> --quiet
 ```
 ## Features
 
-- [ ] progress bar, squelch with `--quiet`
-- [ ] rate-limiting `--rate`
-- [ ] don't repeat uploads, or `--replace` or `--allow-duplicate-uploads`
+- [x] progress bar
+- [ ] rate-limiting `--rate` (there are no limits for Flickr Pro members)
+- [x] don't repeat uploads. absolute paths for uploads are stored and compared
 - [ ] warning when number of images (or total upload size in MB) of upload exceeds a threshold `--nowarn` to disable
-- [ ] exclude files which are not images (i.e. only JPG, PNG, GIF)
-- [ ] default uploads are `private`, can set to `public` and/or `friends/family` : `--privacy=public|friends|private`
-- [ ] upload to existing album (interactively choose with `--select-album, -s`)
-- [ ] upload to new album `--album=`, `--use-directory-name|-d`
+- [x] exclude files which are not images (i.e. only JPG, PNG, GIF)
+- [x] default uploads are `private`, can set to `public` and/or `friends/family` : `--privacy=public|friends|private`
+- [x] upload to existing album (list albums with `-l`)
+- [x] upload to new album `--album=`, or `--use-directory-name|-d`
 
 ## Future plans
+- [ ] 2-way sync (Flickr photoset <-> folder on disk)
 - [ ] set title and description from EXIF (disable with `--no-exif-title`, `--no-exif-desc`)
 - [ ] local web app
 - [ ] GUI application (Electron? React?)

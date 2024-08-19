@@ -11,7 +11,26 @@ source env/flickr/bin/activate
 ```
 ### Usage
 ```
-syncr --folder=<folder, relative or absolute> --rate=<images per minute> --quiet --nowarn --album="My New Album" | --use-directory-name | --select-album
+usage: syncr [-h] [-l] [-n ALBUMNAME] [-d] [-e EXISTINGALBUM] [-p PRIVACY] [--download ALBUMID] [--dryrun] folder
+
+Upload images to Flickr
+
+positional arguments:
+  folder                upload this folder of images (incl. all subfolders)
+
+options:
+  -h, --help            show this help message and exit
+  -l, --list            list existing albums and exit
+  -n ALBUMNAME, --albumname ALBUMNAME
+                        add images to a new album called ALBUMNAME
+  -d, --usedirname      use the folder name as the album name (creates a new album)
+  -e EXISTINGALBUM, --existingalbum EXISTINGALBUM
+                        upload to existing album (specify album/photoset ID)
+  -p PRIVACY, --privacy PRIVACY
+                        set image privacy to PRIVACY. Default is public
+  --download ALBUMID    Download all images (original size) from ALBUMID to FOLDER
+  --dryrun              Dry run - don't make any changes on Flickr
+
 ```
 ## Features
 
@@ -31,4 +50,3 @@ syncr --folder=<folder, relative or absolute> --rate=<images per minute> --quiet
 - [ ] set title and description from EXIF (disable with `--no-exif-title`, `--no-exif-desc`)
 - [ ] local web app
 - [ ] GUI application (Electron? React?)
-- [ ] resize before upload (max dimensions)

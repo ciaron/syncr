@@ -16,9 +16,8 @@ flickr.authenticate_via_browser(perms='write')
 lastline=False
 numfiles=0
 
+# warn about uploads bigger than this threshold
 threshold=200 #MB
-# calculate an MD5 hash for a file:
-# hashlib.md5(open('./IMAGES/11/11/DSCF3801.JPG', 'rb').read()).hexdigest()
 
 def lines_that_start_with(string, fp):
     return [line for line in fp if line.startswith(string)]
@@ -117,7 +116,6 @@ def list_images(path):
         for file in f:
             if is_image(os.path.join(r,file)):
                 files.append(os.path.join(r, file))
-            #files.append(os.path.join(r, file))
 
     lst = [file for file in files]
     return lst
@@ -148,7 +146,8 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--albumname', help='add images to a new album called ALBUMNAME')
     parser.add_argument('-d', '--usedirname', action="store_true", help='use the folder name as the album name (creates a new album)')
     parser.add_argument('-e', '--existingalbum', help='upload to existing album (specify album/photoset ID)')
-    parser.add_argument('-p', '--privacy', help='set image privacy to PRIVACY. Default is private', default="private")
+    #parser.add_argument('-p', '--privacy', help='set image privacy to PRIVACY. Default is private', default="private")
+    parser.add_argument('-p', '--privacy', help='set image privacy on upload. Default is private', choices=['public', 'private'], default='private')
     parser.add_argument('-y', help='don\'t prompt, assume affirmative', action="store_true")
     parser.add_argument('--download', dest='albumid', help='Download all images (original size) from ALBUMID to FOLDER')
     parser.add_argument('--dryrun', action="store_true", default=False, help='Dry run - don\'t make any changes on Flickr')

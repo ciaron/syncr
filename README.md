@@ -37,7 +37,7 @@ options:
 - [x] progress bar
 - [x] don't repeat uploads. absolute paths for uploads are stored and compared
 - [x] warning when number of images (or total upload size in MB) of upload exceeds a threshold, `-y` to disable
-- [x] exclude files which are not images (i.e. only JPG, PNG, GIF)
+- [x] exclude files which are not images
 - [x] default uploads are `private`, can set to `--privacy=public`
 - [x] upload to existing album (list albums with `-l`)
 - [x] upload to new album `--album=`, or `--use-directory-name|-d`
